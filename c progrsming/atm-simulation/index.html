@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meridian National Bank — ATM Terminal Simulator (MNB-4092)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top Operational Header Bar -->
+  <header class="sim-topbar">
+    <div class="sim-topbar-inner">
+      <div class="sim-brand">
+        <svg class="bank-mark" viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+          <rect x="2" y="2" width="28" height="28" rx="4" fill="#0f2b46"/>
+          <path d="M8 22V10h3.2l4.8 7.4L20.8 10H24v12h-3v-7.1l-4.2 6.3h-1.6L11 14.9V22H8z" fill="#e6ecf2"/>
+          <rect x="8" y="24.5" width="16" height="1.8" fill="#c59b27"/>
+        </svg>
+        <div>
+          <span class="sim-title">Meridian National Bank</span>
+          <span class="sim-subtitle">Self-Service Cash Terminal Simulator &bull; Unit MNB-4092</span>
+        </div>
+      </div>
+
+      <div class="sim-controls">
+        <div class="status-pill" id="network-pill">
+          <span class="led-dot led-green"></span>
+          <span>HOST ISO-8583 ONLINE</span>
+        </div>
+        <button type="button" class="ctrl-btn" id="btn-sound" aria-pressed="true" title="Toggle synthesized keypad and dispenser audio">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path id="sound-wave" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+          <span id="sound-label">Audio: ON</span>
+        </button>
+        <button type="button" class="ctrl-btn ctrl-btn-danger" id="btn-factory-reset" title="Reset all balances, cassettes, and session state">
+          Reset Terminal
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace: Physical ATM Cabinet + Technician/Simulator Console -->
+  <main class="workspace">
+    <!-- LEFT: PHYSICAL ATM HARDWARE CABINET -->
+    <section class="atm-stage" aria-label="Interactive ATM Hardware Terminal">
+      <div class="atm-cabinet">
+        <!-- Upper Fascia Plate -->
+        <div class="atm-fascia-top">
+          <div class="fascia-brand">
+            <div class="fascia-emblem">MNB</div>
+            <div class="fascia-text">
+              <div class="fascia-bank-name">MERIDIAN NATIONAL</div>
+              <div class="fascia-meta">24-HOUR AUTOMATED TELLER &bull; TERMINAL #MNB-4092</div>
+            </div>
+          </div>
+          <div class="fascia-sensors">
+            <div class="camera-dome" title="Surveillance Camera Active">
+              <span class="camera-lens"></span>
+              <span class="camera-rec">REC</span>
+            </div>
+            <div class="fascia-clock mono" id="atm-hw-clock">--:--:--</div>
+          </div>
+        </div>
+
+        <!-- Screen Bezel & Side Soft-Keys Assembly -->
+        <div class="screen-deck">
+          <!-- Left Hardware Soft-Keys -->
+          <div class="softkey-col softkey-col-left" aria-label="Left screen bezel keys">
+            <button type="button" class="softkey" data-softkey="L1" id="sk-L1" aria-label="Left Soft Key 1">
+              <span class="softkey-cap"></span>
+              <span class="softkey-arrow">&#9654;</span>
+            </button>
+            <button type="button" class="softkey" data-softkey="L2" id="sk-L2" aria-label="Left Soft Key 2">
+              <span class="softkey-cap"></span>
+              <span class="softkey-arrow">&#9654;</span>
+            </button>
+            <button type="button" class="softkey" data-softkey="L3" id="sk-L3" aria-label="Left Soft Key 3">
+              <span class="softkey-cap"></span>
+              <span class="softkey-arrow">&#9654;</span>
+            </button>
+            <button type="button" class="softkey" data-softkey="L4" id="sk-L4" aria-label="Left Soft Key 4">
+              <span class="softkey-cap"></span>
+              <span class="softkey-arrow">&#9654;</span>
+            </button>
+          </div>
+
+          <!-- Recessed LCD Monitor -->
+          <div class="crt-recess">
+            <div class="atm-screen" id="atm-screen" role="region" aria-live="polite" aria-label="ATM Display Monitor">
+              <!-- Screen Top Status Bar -->
+              <div class="scr-header">
+                <div class="scr-bank">
+                  <span class="scr-bank-badge">MNB</span>
+                  <span id="scr-title">WELCOME</span>
+                </div>
+                <div class="scr-meta mono">
+                  <span id="scr-session-timer" class="scr-timer hidden">02:00</span>
+                  <span id="scr-card-badge" class="scr-card-badge hidden">CARD IN</span>
+                </div>
+              </div>
+
+              <!-- Dynamic Screen Body Rendered by app.js -->
+              <div class="scr-body" id="scr-body"></div>
+
+              <!-- Screen Bottom Soft-Key Prompt Bar -->
+              <div class="scr-footer">
+                <span id="scr-hint-left">SELECT OPTION OR USE SIDE KEYS</span>
+                <span class="mono" id="scr-lang-indicator">EN</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Hardware Soft-Keys -->
+          <div class="softkey-col softkey-col-right" aria-label="Right screen bezel keys">
+            <button type="button" class="softkey" data-softkey="R1" id="sk-R1" aria-label="Right Soft Key 1">
+              <span class="softkey-arrow">&#9664;</span>
+              <span class="softkey-cap"></span>
+            </button>
+            <button type="button" class="softkey" data-softkey="R2" id="sk-R2" aria-label="Right Soft Key 2">
+              <span class="softkey-arrow">&#9664;</span>
+              <span class="softkey-cap"></span>
+            </button>
+            <button type="button" class="softkey" data-softkey="R3" id="sk-R3" aria-label="Right Soft Key 3">
+              <span class="softkey-arrow">&#9664;</span>
+              <span class="softkey-cap"></span>
+            </button>
+            <button type="button" class="softkey" data-softkey="R4" id="sk-R4" aria-label="Right Soft Key 4">
+              <span class="softkey-arrow">&#9664;</span>
+              <span class="softkey-cap"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Lower Hardware Interface Deck -->
+        <div class="hardware-deck">
+          <!-- Left Module: Receipt Printer + NFC Contactless Pad -->
+          <div class="hw-col hw-col-left">
+            <!-- Receipt Printer -->
+            <div class="hw-module">
+              <div class="hw-label-row">
+                <span class="hw-label">RECEIPT</span>
+                <span class="hw-led" id="led-receipt"></span>
+              </div>
+              <div class="receipt-slot-housing">
+                <div class="receipt-chute"></div>
+                <button type="button" class="paper-ticket hidden" id="hw-receipt-paper" title="Click to collect and inspect printed receipt">
+                  <span class="paper-serrated"></span>
+                  <span class="paper-lines">
+                    <span>MERIDIAN BANK</span>
+                    <span id="hw-receipt-type">RECEIPT</span>
+                    <span>COLLECT SLIP</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Contactless NFC Pad -->
+            <div class="hw-module">
+              <div class="hw-label-row">
+                <span class="hw-label">TAP CARD / NFC</span>
+                <span class="hw-led led-active-blue" id="led-nfc"></span>
+              </div>
+              <button type="button" class="nfc-pad" id="hw-nfc-pad" title="Tap active card via contactless NFC">
+                <svg viewBox="0 0 48 32" width="36" height="24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M12 10a10 10 0 0 1 0 12"/>
+                  <path d="M17 7a15 15 0 0 1 0 18"/>
+                  <path d="M22 4a20 20 0 0 1 0 24"/>
+                  <rect x="29" y="8" width="14" height="16" rx="2"/>
+                </svg>
+                <span>CONTACTLESS</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Center Module: Recessed EPP Encrypted PIN Pad -->
+          <div class="hw-col hw-col-center">
+            <div class="epp-hood">
+              <div class="epp-header">
+                <span>ENCRYPTED PIN PAD &bull; PCI-PTS</span>
+                <span class="epp-shield" aria-hidden="true">PRIVACY SHIELD</span>
+              </div>
+              <div class="epp-grid" role="group" aria-label="ATM PIN Keypad">
+                <button type="button" class="epp-key" data-key="1">1<small>&nbsp;</small></button>
+                <button type="button" class="epp-key" data-key="2">2<small>ABC</small></button>
+                <button type="button" class="epp-key" data-key="3">3<small>DEF</small></button>
+                <button type="button" class="epp-key epp-func epp-cancel" data-action="CANCEL">
+                  <span>CANCEL</span>
+                  <i class="tactile-mark mark-cancel"></i>
+                </button>
+
+                <button type="button" class="epp-key" data-key="4">4<small>GHI</small></button>
+                <button type="button" class="epp-key epp-home" data-key="5">5<small>JKL</small></button>
+                <button type="button" class="epp-key" data-key="6">6<small>MNO</small></button>
+                <button type="button" class="epp-key epp-func epp-clear" data-action="CLEAR">
+                  <span>CLEAR</span>
+                  <i class="tactile-mark mark-clear"></i>
+                </button>
+
+                <button type="button" class="epp-key" data-key="7">7<small>PQRS</small></button>
+                <button type="button" class="epp-key" data-key="8">8<small>TUV</small></button>
+                <button type="button" class="epp-key" data-key="9">9<small>WXYZ</small></button>
+                <button type="button" class="epp-key epp-func epp-enter" data-action="ENTER">
+                  <span>ENTER</span>
+                  <i class="tactile-mark mark-enter"></i>
+                </button>
+
+                <button type="button" class="epp-key epp-sub" data-key="00">00</button>
+                <button type="button" class="epp-key" data-key="0">0<small>+</small></button>
+                <button type="button" class="epp-key epp-sub" data-action="BACK">DEL</button>
+                <div class="epp-blank" aria-hidden="true"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Module: EMV Card Reader + Cash Dispenser + Deposit Acceptor -->
+          <div class="hw-col hw-col-right">
+            <!-- Card Reader -->
+            <div class="hw-module">
+              <div class="hw-label-row">
+                <span class="hw-label">CARD READER</span>
+                <span class="hw-led led-blink-green" id="led-card"></span>
+              </div>
+              <div class="card-slot-bezel" id="hw-card-slot">
+                <div class="card-throat">
+                  <div class="card-guide-arrows">&#9650; CHIP UP</div>
+                </div>
+                <button type="button" class="inserted-card hidden" id="hw-inserted-card" title="Click to insert or retrieve card">
+                  <span class="mini-chip"></span>
+                  <span class="mini-pan mono" id="hw-card-pan">4821</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Cash Dispenser Shutter -->
+            <div class="hw-module">
+              <div class="hw-label-row">
+                <span class="hw-label">CASH DISPENSER</span>
+                <span class="hw-led" id="led-cash"></span>
+              </div>
+              <div class="dispenser-bay" id="hw-dispenser-bay">
+                <div class="shutter-door" id="hw-shutter">
+                  <span>TAKE CASH</span>
+                </div>
+                <button type="button" class="dispensed-bundle hidden" id="hw-cash-bundle" title="Click to collect dispensed cash">
+                  <span class="banknote note-back"></span>
+                  <span class="banknote note-mid"></span>
+                  <span class="banknote note-front">
+                    <span class="note-seal">USD</span>
+                    <span class="note-amt mono" id="hw-bundle-amount">$0</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Cash / Check Deposit Acceptor -->
+            <div class="hw-module">
+              <div class="hw-label-row">
+                <span class="hw-label">DEPOSIT SLOT</span>
+                <span class="hw-led" id="led-deposit"></span>
+              </div>
+              <div class="deposit-throat" id="hw-deposit-slot">
+                <div class="deposit-mouth"></div>
+                <span class="deposit-hint">NOTES &bull; NO COINS / CLIPS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cabinet Footer Plate -->
+        <div class="atm-fascia-bottom">
+          <span>PROTECTED BY 24-HR SURVEILLANCE &amp; ANTI-SKIMMING SENSORS</span>
+          <span class="mono">EMV L2 &bull; PCI-DSS 4.0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: SIMULATOR WALLET, CASSETTES, RECEIPTS & TELEMETRY -->
+    <aside class="console-panel" aria-label="Simulator Controls and Diagnostics">
+      <nav class="console-tabs" role="tablist">
+        <button type="button" class="tab-btn active" role="tab" aria-selected="true" data-tab="wallet">Cards &amp; Wallet</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="cassettes">Vault &amp; Supplies</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="receipts">Receipts <span class="tab-count" id="receipt-count">0</span></button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="telemetry">ISO-8583 Log</button>
+      </nav>
+
+      <!-- TAB 1: TEST CARDS / WALLET -->
+      <div class="tab-pane active" id="pane-wallet" role="tabpanel">
+        <div class="pane-intro">
+          <h3>Customer EMV Cards</h3>
+          <p>Select a card to insert into the reader (or tap the contactless pad). You can also use your physical keyboard (<code>0-9</code>, <code>Enter</code>, <code>Esc</code>).</p>
+        </div>
+
+        <div class="card-stack" id="wallet-cards-list"></div>
+
+        <div class="info-box">
+          <div class="info-box-title">Keyboard Shortcuts</div>
+          <ul class="shortcut-list">
+            <li><kbd>0</kbd>–<kbd>9</kbd> <span>Keypad Digits</span></li>
+            <li><kbd>Enter</kbd> <span>Confirm / Enter</span></li>
+            <li><kbd>Backspace</kbd> <span>Clear / Delete</span></li>
+            <li><kbd>Esc</kbd> <span>Cancel / Eject</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- TAB 2: CASH CASSETTES & HARDWARE SERVICE -->
+      <div class="tab-pane" id="pane-cassettes" role="tabpanel">
+        <div class="pane-intro">
+          <h3>ATM Cash Cassettes &amp; Consumables</h3>
+          <p>Live dispenser vault levels. Withdrawals pick bills from these physical cassettes; deposits enter the escrow bin.</p>
+        </div>
+
+        <div class="vault-summary-card">
+          <div>
+            <span class="metric-label">DISPENSABLE VAULT CASH</span>
+            <strong class="metric-value mono" id="vault-total-cash">$0.00</strong>
+          </div>
+          <div>
+            <span class="metric-label">DEPOSIT ESCROW BIN</span>
+            <strong class="metric-value mono" id="vault-deposit-cash">$0.00</strong>
+          </div>
+        </div>
+
+        <div class="cassette-list" id="cassette-list"></div>
+
+        <div class="supply-row">
+          <div class="supply-head">
+            <span>Thermal Receipt Paper Roll</span>
+            <span class="mono" id="paper-pct">100%</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill" id="paper-meter" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div class="service-actions">
+          <button type="button" class="svc-btn svc-primary" id="btn-replenish">Replenish All Cassettes &amp; Paper</button>
+          <button type="button" class="svc-btn" id="btn-empty-escrow">Empty Deposit Escrow Bin</button>
+          <button type="button" class="svc-btn" id="btn-unlock-cards">Unlock Retained / Locked Cards</button>
+        </div>
+      </div>
+
+      <!-- TAB 3: THERMAL RECEIPTS ARCHIVE -->
+      <div class="tab-pane" id="pane-receipts" role="tabpanel">
+        <div class="pane-intro">
+          <h3>Thermal Receipt Archive</h3>
+          <p>Exact slips printed by the ATM thermal printer during your session.</p>
+        </div>
+        <div class="receipt-stage" id="receipt-viewer">
+          <div class="empty-state">No receipts printed yet. Complete a transaction and choose "Print Receipt".</div>
+        </div>
+        <div class="receipt-history" id="receipt-history"></div>
+      </div>
+
+      <!-- TAB 4: ISO-8583 & HARDWARE TELEMETRY -->
+      <div class="tab-pane" id="pane-telemetry" role="tabpanel">
+        <div class="pane-intro telemetry-head">
+          <div>
+            <h3>Hardware &amp; ISO-8583 Audit Log</h3>
+            <p>Real-time device bus and host authorization trace.</p>
+          </div>
+          <button type="button" class="svc-btn svc-sm" id="btn-clear-log">Clear</button>
+        </div>
+        <div class="telemetry-stream mono" id="telemetry-stream" aria-live="off"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
